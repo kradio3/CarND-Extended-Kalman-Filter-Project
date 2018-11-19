@@ -4,6 +4,9 @@
 # build files
 build/
 
+#uWebSockets
+uWebSockets/
+
 # editor config
 .vscode/
 
