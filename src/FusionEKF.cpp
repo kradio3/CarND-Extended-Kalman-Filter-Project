@@ -32,7 +32,7 @@ FusionEKF::FusionEKF() {
            0, 0, 0.09;
 
   H_laser_ << 1, 0, 0, 0, 
-              0, 1, 0, 0;
+           0, 1, 0, 0;
   /**
 TODO:
    * Finish initializing the FusionEKF.
@@ -42,6 +42,8 @@ TODO:
   ekf_.Q_ = MatrixXd(4, 4);
   noise_ax = 9;
   noise_ay = 9;
+
+  Tools tools;
 }
 
 /**
@@ -82,6 +84,14 @@ TODO:
       /**
         Convert radar from polar to cartesian coordinates and initialize state.
         */
+
+        float rho = measurement_pack.raw_measurements_[0];
+        float theta = measurement_pack.raw_measurements_[1];
+        float rho_dot = measurement_pack.raw_measurements_[2];
+        std::cout<<"rho="<<rho<<"; theta="<<theta<<"; rho_dot="<<rho_dot<<std::endl;
+
+        // Remove me
+        is_initialized_ = false;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       float raw_x = measurement_pack.raw_measurements_[0];
@@ -91,7 +101,7 @@ TODO:
 
     previous_timestamp_ = measurement_pack.timestamp_;
     // done initializing, no need to predict or update
-    is_initialized_ = true;
+    //is_initialized_ = true;
     return;
   }
 
@@ -139,6 +149,7 @@ TODO:
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // Radar updates
+    Hj_ = tools.CalculateJacobian(measurement_pack.raw_measurements_);
   } else {
     // Laser updates
     ekf_.H_ = H_laser_;
