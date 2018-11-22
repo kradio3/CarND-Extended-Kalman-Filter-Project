@@ -1,6 +1,9 @@
 #include <iostream>
 #include "tools.h"
 
+
+#define PI 3.14159265
+
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
 using std::vector;
@@ -40,27 +43,63 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   float py = x_state(1);
   float vx = x_state(2);
   float vy = x_state(3);
+  //pre-compute a set of terms to avoid repeated calculation
+
+  float c1 = px*px+py*py;
+  float c2 = sqrt(c1);
+  float c3 = (c1*c2);
 
   //check division by zero
-  if(px==0 && py==0){
+
+  if(fabs(c1) < 0.0001){
     return Hj;
   }
 
-  float px2 = px*px;
-  float py2 = py*py;
-  float pnorm2 = px2 + py2;
-  float pnorm = std::sqrt(pnorm2);
-
   //compute the Jacobian matrix
-  Hj(0,0) = px/pnorm;
-  Hj(0,1) = py/pnorm;
+  Hj <<  (px/c2), (py/c2), 0, 0,
+         -(py/c1), (px/c1), 0, 0,
+         py*(vx*py - vy*px)/c3, px*(px*vy - py*vx)/c3, px/c2, py/c2;
 
-  Hj(1,0) = -1 * py/pnorm2;
-  Hj(1,1) = px/pnorm2;
-
-  Hj(2,0) = py*(vx*py - vy*px)/(pnorm2*pnorm);
-  Hj(2,1) = px*(vy*px - vx*py)/(pnorm2*pnorm);
-  Hj(2,2) = px/pnorm;
-  Hj(2,3) = py/pnorm;
   return Hj;
+}
+
+VectorXd Tools::Polar2Cartesian(const VectorXd& x_state){
+  MatrixXd p2c(4, 3);
+  float s = sin(x_state(1));
+  float c = cos(x_state(1));
+  p2c << c, 0, 0,
+         s, 0, 0,
+         0, 0, c,
+         0, 0, s;
+  return p2c * x_state;
+}
+
+VectorXd Tools::Cartesian2Polar(const VectorXd& x_state){
+  float px = x_state(0);
+  float py = x_state(1);
+  float vx = x_state(2);
+  float vy = x_state(3);
+
+  float norm2 = px*px + py*py;
+  float norm = std::sqrt(norm2);
+  float projection = px*vx + py*vy;
+
+  float theta = std::atan2(py, px);
+
+  VectorXd polar(3);
+  polar(0) = norm;
+  polar(1) = theta;
+  polar(2) = projection/norm;
+
+  return polar;
+}
+
+float Tools::NormalizeAngle(float angle){
+  float newAngle = angle;
+  if(angle > PI) {
+    newAngle -= 2*PI;
+  } else if(angle < -1*PI) {
+    newAngle += 2*PI;
+  }
+  return newAngle;
 }
