@@ -29,6 +29,12 @@ public:
   */
   MatrixXd CalculateJacobian(const VectorXd& x_state);
 
+  VectorXd Polar2Cartesian(const VectorXd& x_state);
+
+  VectorXd Cartesian2Polar(const VectorXd& x_state);
+
+  float NormalizeAngle(float angle);
+
 };
 
 #endif /* TOOLS_H_ */
